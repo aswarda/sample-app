@@ -1,23 +1,17 @@
-# Use an official Node.js image as a base
-FROM node:18-alpine
+# Use official Nginx image as the base
+FROM nginx:latest
 
-# Set the working directory inside the container
-WORKDIR /app
+# Remove default Nginx HTML files (optional)
+RUN rm -rf /usr/share/nginx/html/*
 
-# Copy package.json and package-lock.json before running npm install
-COPY package*.json ./
+# Copy your static website files to the Nginx root directory
+COPY ./public /usr/share/nginx/html
 
-# Verify if package.json is copied correctly
-RUN ls -lah /app
+# Copy a custom Nginx configuration file (optional)
+COPY nginx.conf /etc/nginx/nginx.conf
 
-# Install production dependencies
-RUN npm install --omit=dev
+# Expose port 80
+EXPOSE 80
 
-# Copy the rest of the application files
-COPY . .
-
-# Expose the port your app runs on
-EXPOSE 3000
-
-# Command to start the application
-CMD ["npm", "start"]
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
