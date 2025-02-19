@@ -21,6 +21,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -36,6 +39,7 @@ jobs:
         run: |
           IMAGE_TAG=${{ github.sha }}
           IMAGE_URI="222634380613.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
           docker build -t $IMAGE_URI .
           docker push $IMAGE_URI
 
@@ -45,10 +49,10 @@ jobs:
 
       - name: Update Task Definition JSON
         run: |
-          IMAGE_TAG=${{ github.sha }}
-          IMAGE_URI="***.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG"
-          jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .tags) 
-              | .containerDefinitions[0].image = $IMAGE_URI' task-definition.json > new-task-definition.json
+          jq --arg IMAGE_URI "$IMAGE_URI" '
+            del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .tags) 
+            | .containerDefinitions[0].image = $IMAGE_URI
+          ' task-definition.json > new-task-definition.json
 
       - name: Register New Task Definition
         run: |
