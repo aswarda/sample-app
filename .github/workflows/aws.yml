@@ -1,65 +1,60 @@
-name: Deploy to Amazon ECS
+name: Deploy to AWS ECS
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
 
 env:
-  AWS_REGION: ap-south-1  # AWS region
-  ECR_REPOSITORY: testecrrepo  # Amazon ECR repository name
-  ECS_SERVICE: aswarda-service  # Amazon ECS service name
-  ECS_CLUSTER: aswarda-cluster  # Amazon ECS cluster name
-  ECS_TASK_DEFINITION: aswarda-definitions  # Amazon ECS task definition name
-  CONTAINER_NAME: testcontainer  # Name of the container in the task definition
-
-permissions:
-  contents: read
+  AWS_REGION: ap-south-1
+  ECR_REPOSITORY: testecrrepo
+  ECS_SERVICE: aswarda-service
+  ECS_CLUSTER: aswarda-cluster
+  ECS_TASK_DEFINITION: aswarda-definitions
+  CONTAINER_NAME: testcontainer
 
 jobs:
   deploy:
-    name: Deploy
     runs-on: ubuntu-latest
-    environment: production
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
+      - name: Authenticate Docker to Amazon ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ***.dkr.ecr.$AWS_REGION.amazonaws.com
 
-    - name: Build, tag, and push image to Amazon ECR
-      id: build-image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+      - name: Build and Push Docker Image
+        run: |
+          IMAGE_TAG=${{ github.sha }}
+          IMAGE_URI="***.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker build -t $IMAGE_URI .
+          docker push $IMAGE_URI
 
-    - name: Fetch Current Task Definition
-      run: |
-        aws ecs describe-task-definition --task-definition $ECS_TASK_DEFINITION --query 'taskDefinition' --output json > task-definition.json
+      - name: Fetch Current Task Definition
+        run: |
+          aws ecs describe-task-definition --task-definition $ECS_TASK_DEFINITION --query 'taskDefinition' --output json > task-definition.json
 
-    - name: Update Task Definition Image
-      run: |
-        IMAGE_URI="222634380613.dkr.ecr.ap-south-1.amazonaws.com/$ECR_REPOSITORY:${{ github.sha }}"
-        jq --arg IMAGE_URI "$IMAGE_URI" '.containerDefinitions[0].image = $IMAGE_URI' task-definition.json > new-task-definition.json
+      - name: Update Task Definition JSON
+        run: |
+          IMAGE_TAG=${{ github.sha }}
+          IMAGE_URI="***.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG"
+          jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .tags) 
+              | .containerDefinitions[0].image = $IMAGE_URI' task-definition.json > new-task-definition.json
 
-    - name: Register New Task Definition
-      id: register-task
-      run: |
-        NEW_TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://new-task-definition.json --query 'taskDefinition.taskDefinitionArn' --output text)
-        echo "NEW_TASK_DEF_ARN=$NEW_TASK_DEF_ARN" >> $GITHUB_ENV
+      - name: Register New Task Definition
+        run: |
+          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://new-task-definition.json --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "NEW_TASK_DEF_ARN=$NEW_TASK_DEF_ARN" >> $GITHUB_ENV
 
-    - name: Deploy to ECS with Force New Deployment
-      run: |
-        aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition $NEW_TASK_DEF_ARN --force-new-deployment
+      - name: Update ECS Service
+        run: |
+          aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition $NEW_TASK_DEF_ARN --force-new-deployment
