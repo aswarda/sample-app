@@ -2,8 +2,8 @@ version: 0.2
 
 env:
   variables:
-    IMAGE_NAME: your-app-name
-    ECR_REPO_URI: <your-account-id>.dkr.ecr.<region>.amazonaws.com/your-app-name
+    IMAGE_NAME: test
+    ECR_REPO_URI: 751651548664.dkr.ecr.<region>.amazonaws.com/your-app-name
 
 phases:
   pre_build:
