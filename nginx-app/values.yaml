@@ -1,19 +1,13 @@
 replicaCount: 1
-
 image:
   repository: 966127383941.dkr.ecr.eu-central-1.amazonaws.com/sample-app
   pullPolicy: IfNotPresent
   tag: "latest"
-
 service:
   type: NodePort
   port: 80
-
 resources: {}
-
 nodeSelector: {}
-
 tolerations: []
-
 affinity: {}
 
