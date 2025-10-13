@@ -18,6 +18,8 @@ The infrastructure was provisioned using **Terraform**, which created:
 ---
 ## ⚙️ Terraform Deployment Workflow
 
+Terraform code is available at here: https://github.com/aswarda/terraform/tree/aswarda & branch is `aswarda
+
 ### 🔹 Terraform Commands
 
 Below are the commands used to deploy the infrastructure:
