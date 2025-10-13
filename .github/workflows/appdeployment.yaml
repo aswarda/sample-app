@@ -39,14 +39,15 @@ jobs:
         run: |
           IMAGE_TAG=${{ github.run_number }}
           docker build -t $ECR_REPO:$IMAGE_TAG .
+
       # Step 5: Run Snyk Security Scan
       - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/docker@master
+        run: |
+          npm install -g snyk
+          snyk auth 336eddcc-2d40-450d-811a-f105e1578fa6
+          snyk container test ${{ env.ECR_REPO }}:${{ github.run_number }}
         env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          image: ${{ env.ECR_REPO }}:${{ github.run_number }}
-          args: --file=Dockerfile
+          ECR_REPO: ${{ env.ECR_REPO }}
 
       # Step 5: Push Docker Image
       - name: Push Docker image
