@@ -41,15 +41,21 @@ jobs:
           docker build -t $ECR_REPO:$IMAGE_TAG .
 
       # Step 5: Push Docker Image
+      - name: Push Docker image
         run: |
           IMAGE_TAG=${{ github.run_number }}
           docker push $ECR_REPO:$IMAGE_TAG
 
-      # Step 6: Setup Helm
+      # Step 6: Install Helm
       - name: Install Helm
         uses: azure/setup-helm@v4
 
-      # Step 7: Deploy / Upgrade Helm Release
+      # Step 7: Configure kubectl for EKS
+      - name: Configure kubectl for EKS
+        run: |
+          aws eks update-kubeconfig --region $AWS_REGION --name my-eks-cluster
+
+      # Step 8: Deploy/Upgrade Helm Chart
       - name: Deploy with Helm
         run: |
           IMAGE_TAG=${{ github.run_number }}
@@ -58,3 +64,4 @@ jobs:
             --set image.repository=$ECR_REPO \
             --set image.tag=$IMAGE_TAG \
             --create-namespace
+
