@@ -1,4 +1,4 @@
-name: Build and Deploy to ECR using Helm
+name: Build and Deploy to sample app
 
 on:
   push:
