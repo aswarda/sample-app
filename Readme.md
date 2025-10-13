@@ -95,7 +95,8 @@ helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-contro
 ### Deploy the Sample Application (Helm Chart)
 
 The sample Nginx app is deployed via Helm:
-``yaml
+
+```yaml
 helm install my-nginx-app ./nginx-app
 ```
 To redeploy or upgrade:
