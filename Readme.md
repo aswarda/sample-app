@@ -327,6 +327,7 @@ Before running this setup, ensure:
 ## 🛠 Environment Availability
 
 The deployed environment (EKS cluster, sample app, and Grafana dashboard) will be available until **14th end of the day of this month**. Please ensure all testing and usage is completed before this date.
+> If you are checking this assignment after 14th oct 2025, please refer the files -> `sample-app.png`, `grafana-dashboards.png`, `dashboard-2.png`
 
 
 # 👨‍💻 Author
