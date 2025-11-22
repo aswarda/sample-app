@@ -1,0 +1,44 @@
+name: grype Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: eu-central-1
+      ECR_REPO: 966127383941.dkr.ecr.eu-central-1.amazonaws.com/sample-app
+      HELM_RELEASE: my-nginx-app
+      HELM_CHART_PATH: ./nginx-app
+      NAMESPACE: default
+
+    steps:
+      # Step 1: Checkout Code first
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Install grype
+      - name: Configure AWS credentials
+        run: |
+          sudo snap install grype --classic
+          grype --version
+
+      # Step 4: Build Docker Image
+      - name: Build Docker image
+        run: |
+          IMAGE_TAG=${{ github.run_number }}
+          docker build -t $ECR_REPO:$IMAGE_TAG .
+
+      # Step 5: Run Snyk Security Scan
+      - name: Run Snyk Security Scan
+        run: |
+          npm install -g snyk
+          snyk auth $SNYK_TOKEN
+          snyk container test ${{ env.ECR_REPO }}:${{ github.run_number }} || true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
