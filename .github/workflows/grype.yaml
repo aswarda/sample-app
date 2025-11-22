@@ -41,4 +41,7 @@ jobs:
           snyk container test ${{ env.ECR_REPO }}:${{ github.run_number }} || true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
+      # Step 6: Run Snyk Security Scan
+      - name: Run grype Scan
+        run: |
+          grype ${{ env.ECR_REPO }}:${{ github.run_number }} || true
