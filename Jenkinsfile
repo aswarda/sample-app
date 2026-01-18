@@ -13,7 +13,7 @@ metadata:
   labels:
     jenkins: slave
 spec:
-  serviceAccountName: jenkins
+  serviceAccountName: jenkins-admin
   securityContext:
     fsGroup: 1000
   containers:
