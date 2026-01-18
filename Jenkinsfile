@@ -1,0 +1,67 @@
+def label = "jenkins-git-agent_1_0_a"
+
+podTemplate(
+    cloud: "kubernetes",
+    name: label,
+    label: label,
+    idleMinutes: 60,
+    nodeUsageMode: "EXCLUSIVE",
+    yaml: """
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    jenkins: slave
+spec:
+  serviceAccountName: jenkins
+  securityContext:
+    fsGroup: 1000
+  containers:
+  - name: build
+    image: alpine/git:latest
+    command:
+    - cat
+    tty: true
+    env:
+    - name: GIT_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: git-token
+          key: token
+  - name: jnlp
+    image: jenkins/inbound-agent:latest
+"""
+) {
+
+    node(label) {
+
+        container('build') {
+
+            stage("Prepare Workspace") {
+                ws('/home/jenkins/agent/workspace') {
+                    cleanWs()
+                }
+            }
+
+            stage("Checkout Code") {
+                sh """
+                    git config --global url."https://\${GIT_TOKEN}@github.com/".insteadOf "https://github.com/"
+                    git clone https://github.com/aswarda/sample-app.git
+                """
+            }
+
+            stage("Build") {
+                sh """
+                    echo "Running build inside Kubernetes agent pod"
+                """
+            }
+
+            stage("Test") {
+                sh """
+                    echo "Running tests inside Kubernetes agent pod"
+                """
+            }
+
+        }
+    }
+}
