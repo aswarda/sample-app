@@ -29,7 +29,7 @@ spec:
           name: git-token
           key: token
     - name: JENKINS_URL
-      value: http://jenkins:8080/       
+      value: "http://jenkins.jenkins.svc.cluster.local:8080/"     
   - name: jnlp
     image: jenkins/inbound-agent:latest
 """
