@@ -28,25 +28,17 @@ spec:
         secretKeyRef:
           name: git-token
           key: token
-
+    - name: JENKINS_URL
+      value: "http://jenkins.jenkins.svc.cluster.local:8080/"
   - name: jnlp
     image: jenkins/inbound-agent:latest
-
-  - name: ubuntu
-    image: ubuntu:22.04
-    command: ['cat']
-    tty: true
     env:
-    - name: DEBIAN_FRONTEND
-      value: noninteractive
+    - name: JENKINS_URL
+      value: "http://jenkins.jenkins.svc.cluster.local:8080/"
 """
 ) {
-
     node(label) {
-
-        /* ---------------- BUILD CONTAINER ---------------- */
         container('build') {
-
             stage("Prepare Workspace") {
                 ws('/home/jenkins/agent/workspace') {
                     cleanWs()
@@ -55,40 +47,22 @@ spec:
 
             stage("Checkout Code") {
                 sh '''
-                  git config --global url."https://${GIT_TOKEN}@github.com/".insteadOf "https://github.com/"
-                  git clone https://github.com/aswarda/sample-app.git
+                    git config --global url."https://${GIT_TOKEN}@github.com/".insteadOf "https://github.com/"
+                    git clone https://github.com/aswarda/sample-app.git
                 '''
             }
 
             stage("Build") {
                 sh '''
-                  echo "Running build inside Kubernetes agent pod"
-                  ls -la sample-app
-                  cat sample-app/Jenkinsfile
+                    echo "Running build inside Kubernetes agent pod"
+                    ls -la sample-app
+                    cat sample-app/Jenkinsfile
                 '''
             }
 
             stage("Test") {
                 sh '''
-                  echo "Running tests inside Kubernetes agent pod"
-                '''
-            }
-        }
-
-        /* ---------------- UBUNTU CONTAINER ---------------- */
-        container('ubuntu') {
-
-            stage('Build (Ubuntu)') {
-                sh '''
-                  apt-get update
-                  apt-get install -y curl make gcc
-                  echo "Running complex build operations"
-                '''
-            }
-
-            stage('Test (Ubuntu)') {
-                sh '''
-                  echo "Running tests with Ubuntu tools"
+                    echo "Running tests inside Kubernetes agent pod"
                 '''
             }
         }
