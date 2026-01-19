@@ -1,3 +1,4 @@
+def label = "jenkins-git-agent_1_0_a"
 podTemplate(
     cloud: "kubernetes",
     name: label,
