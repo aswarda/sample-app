@@ -1,4 +1,5 @@
 def label = "jenkins-git-agent_1_0_a"
+
 podTemplate(
     cloud: "kubernetes",
     name: label,
@@ -28,13 +29,41 @@ spec:
           name: git-token
           key: token
     - name: JENKINS_URL
-      value: "http://jenkins.jenkins.svc.cluster.local:8080/"  # FIXED: Use proper service DNS
+      value: "http://jenkins.jenkins.svc.cluster.local:8080/"
   - name: jnlp
     image: jenkins/inbound-agent:latest
     env:
     - name: JENKINS_URL
-      value: "http://jenkins.jenkins.svc.cluster.local:8080/"  # ADD: JNLP needs it too
+      value: "http://jenkins.jenkins.svc.cluster.local:8080/"
 """
 ) {
-    // rest of pipeline unchanged
+    node(label) {
+        container('build') {
+            stage("Prepare Workspace") {
+                ws('/home/jenkins/agent/workspace') {
+                    cleanWs()
+                }
+            }
+
+            stage("Checkout Code") {
+                sh '''
+                    git config --global url."https://${GIT_TOKEN}@github.com/".insteadOf "https://github.com/"
+                    git clone https://github.com/aswarda/sample-app.git
+                '''
+            }
+
+            stage("Build") {
+                sh '''
+                    echo "Running build inside Kubernetes agent pod"
+                    ls -la
+                '''
+            }
+
+            stage("Test") {
+                sh '''
+                    echo "Running tests inside Kubernetes agent pod"
+                '''
+            }
+        }
+    }
 }
