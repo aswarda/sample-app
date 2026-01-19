@@ -55,7 +55,8 @@ spec:
             stage("Build") {
                 sh '''
                     echo "Running build inside Kubernetes agent pod"
-                    ls -la
+                    ls -la sample-app
+                    cat sample-app/Jenkinsfile
                 '''
             }
 
