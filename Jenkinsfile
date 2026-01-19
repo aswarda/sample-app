@@ -35,6 +35,13 @@ spec:
     env:
     - name: JENKINS_URL
       value: "http://jenkins.jenkins.svc.cluster.local:8080/"
+  - name: ubuntu        # YOUR build/test tools
+    image: ubuntu:22.04
+    command: ['cat']
+    tty: true
+    env:
+    - name: DEBIAN_FRONTEND
+      value: 'noninteractive'
 """
 ) {
     node(label) {
@@ -59,11 +66,21 @@ spec:
                     cat sample-app/Jenkinsfile
                 '''
             }
-
             stage("Test") {
                 sh '''
                     echo "Running tests inside Kubernetes agent pod"
                 '''
+            }
+        container('ubuntu') {
+            stage('Build') {
+                sh '''
+                    apt-get update && apt-get install -y curl make gcc
+                    echo "Running complex build operations"
+                '''
+            }
+            
+            stage('Test') {
+                sh 'echo "Running tests with Ubuntu tools"'
             }
         }
     }
