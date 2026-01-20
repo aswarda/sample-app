@@ -104,6 +104,8 @@ spec:
 
             stage("Docker Build") {
                 sh '''
+                    systemctl status docker.socket
+                    systemctl status docker.service
                     cd sample-app
                     docker build -t sample-app:latest .
                     docker run --rm sample-app:latest echo "✅ Docker build successful!"
