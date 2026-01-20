@@ -19,8 +19,7 @@ spec:
   containers:
   - name: build
     image: alpine/git:latest
-    command:
-    - cat
+    command: ['cat']
     tty: true
     env:
     - name: GIT_TOKEN
@@ -37,8 +36,7 @@ spec:
       value: "http://jenkins.jenkins.svc.cluster.local:8080/"
   - name: ubuntu
     image: ubuntu:22.04
-    command:
-    - cat
+    command: ['cat']
     tty: true
     env:
     - name: DEBIAN_FRONTEND
@@ -46,7 +44,6 @@ spec:
 """
 ) {
     node(label) {
-        // KEEP ALL EXISTING STAGES IN BUILD CONTAINER
         container('build') {
             stage("Prepare Workspace") {
                 ws('/home/jenkins/agent/workspace') {
@@ -65,7 +62,6 @@ spec:
                 sh '''
                     echo "Running build inside Kubernetes agent pod"
                     ls -la sample-app
-                    cat sample-app/Jenkinsfile
                 '''
             }
 
@@ -76,26 +72,34 @@ spec:
             }
         }
 
-        // NEW UBUNTU CONTAINER STAGES
         container('ubuntu') {
             stage("Install Docker") {
                 sh '''
+                    # Install prerequisites
                     apt-get update
-                    apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
-                    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-                    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+                    apt-get install -y ca-certificates curl gnupg lsb-release
+                    
+                    # Add Docker GPG key (modern method - no deprecated apt-key)
+                    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+                    
+                    # Add Docker repository (manual echo - no add-apt-repository needed)
+                    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+                    
+                    # Install Docker
                     apt-get update
-                    apt-get install -y docker-ce docker-ce-cli containerd.io
+                    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+                    
+                    # Verify
                     docker --version
-                    echo "Docker installed successfully!"
+                    echo "✅ Docker installed successfully!"
                 '''
             }
 
-            stage("Docker Build (Ubuntu)") {
+            stage("Docker Build") {
                 sh '''
                     cd sample-app
-                    docker build -t sample-app:latest -f Dockerfile .
-                    docker run --rm sample-app:latest echo "Docker build successful!"
+                    docker build -t sample-app:latest .
+                    docker run --rm sample-app:latest echo "✅ Docker build successful!"
                 '''
             }
         }
