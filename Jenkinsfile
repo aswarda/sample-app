@@ -16,7 +16,7 @@ spec:
   serviceAccountName: jenkins-admin
   securityContext:
     fsGroup: 1000
-  volumes:  # ← ADD THIS
+  volumes: 
   - name: docker-sock
     hostPath:
       path: /var/run/docker.sock
@@ -45,12 +45,12 @@ spec:
     env:
     - name: DEBIAN_FRONTEND
       value: noninteractive
-    volumeMounts:  # ← ADD THIS
+    volumeMounts: 
     - name: docker-sock
       mountPath: /var/run/docker.sock
-  - name: docker      # ← REPLACED ubuntu
+  - name: docker
     image: docker:27.4.1-dind-alpine3.21
-    privileged: true   # Docker daemon needs this
+    privileged: true
     command: ['dockerd']
     env:
     - name: DOCKER_TLS_CERTDIR
