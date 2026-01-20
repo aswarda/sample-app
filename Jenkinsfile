@@ -4,7 +4,7 @@ podTemplate(
     cloud: "kubernetes",
     name: label,
     label: label,
-    idleMinutes: 60,
+    idleMinutes: 02,
     nodeUsageMode: "EXCLUSIVE",
     yaml: """
 apiVersion: v1
@@ -35,9 +35,18 @@ spec:
     env:
     - name: JENKINS_URL
       value: "http://jenkins.jenkins.svc.cluster.local:8080/"
+  - name: ubuntu
+    image: ubuntu:22.04
+    command:
+    - cat
+    tty: true
+    env:
+    - name: DEBIAN_FRONTEND
+      value: noninteractive
 """
 ) {
     node(label) {
+        // KEEP ALL EXISTING STAGES IN BUILD CONTAINER
         container('build') {
             stage("Prepare Workspace") {
                 ws('/home/jenkins/agent/workspace') {
@@ -63,6 +72,30 @@ spec:
             stage("Test") {
                 sh '''
                     echo "Running tests inside Kubernetes agent pod"
+                '''
+            }
+        }
+
+        // NEW UBUNTU CONTAINER STAGES
+        container('ubuntu') {
+            stage("Install Docker") {
+                sh '''
+                    apt-get update
+                    apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
+                    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+                    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+                    apt-get update
+                    apt-get install -y docker-ce docker-ce-cli containerd.io
+                    docker --version
+                    echo "Docker installed successfully!"
+                '''
+            }
+
+            stage("Docker Build (Ubuntu)") {
+                sh '''
+                    cd sample-app
+                    docker build -t sample-app:latest -f Dockerfile .
+                    docker run --rm sample-app:latest echo "Docker build successful!"
                 '''
             }
         }
