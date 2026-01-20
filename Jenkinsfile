@@ -16,6 +16,10 @@ spec:
   serviceAccountName: jenkins-admin
   securityContext:
     fsGroup: 1000
+  volumes:  # ← ADD THIS
+  - name: docker-sock
+    hostPath:
+      path: /var/run/docker.sock
   containers:
   - name: build
     image: alpine/git:latest
