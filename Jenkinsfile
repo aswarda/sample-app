@@ -58,7 +58,7 @@ spec:
     - name: docker-sock
       mountPath: /var/run/docker.sock
   - name: docker-agent
-    image: docker:27.1-alpine3.19
+    image: docker:latest
     command: ['cat']
     tty: true
     securityContext:
