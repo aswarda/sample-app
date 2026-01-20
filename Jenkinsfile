@@ -108,7 +108,7 @@ spec:
                 '''
             }
             
-        container('docker') {  # ← Works immediately
+        container('docker') {
             stage('Docker Build') {
                 sh '''
                     docker build -t sample-app:latest -f sample-app/Dockerfile .
