@@ -49,7 +49,7 @@ spec:
     - name: docker-sock
       mountPath: /var/run/docker.sock
   - name: docker      # ← REPLACED ubuntu
-    image: docker:27.1-dind-alpine3.19
+    image: docker:27.4.1-dind-alpine3.21
     privileged: true   # Docker daemon needs this
     command: ['dockerd']
     env:
