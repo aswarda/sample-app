@@ -48,6 +48,12 @@ spec:
     volumeMounts:  # ← ADD THIS
     - name: docker-sock
       mountPath: /var/run/docker.sock
+  - name: docker      # ← REPLACED ubuntu
+    image: docker:27.1-dind-alpine3.19
+    privileged: true   # Docker daemon needs this
+    command: ['dockerd']
+    env:
+    - name: DOCKER_TLS_CERTDIR
 """
 ) {
     node(label) {
@@ -101,14 +107,12 @@ spec:
                     echo "✅ Docker installed successfully!"
                 '''
             }
-
-            stage("Docker Build") {
+            
+        container('docker') {  # ← Works immediately
+            stage('Docker Build') {
                 sh '''
-                    systemctl status docker.socket
-                    systemctl status docker.service
-                    cd sample-app
-                    docker build -t sample-app:latest .
-                    docker run --rm sample-app:latest echo "✅ Docker build successful!"
+                    docker build -t sample-app:latest -f sample-app/Dockerfile .
+                    docker run --rm sample-app:latest
                 '''
             }
         }
