@@ -114,6 +114,7 @@ spec:
                     docker build -t sample-app:latest -f sample-app/Dockerfile .
                     docker run --rm sample-app:latest
                 '''
+                }
             }
         }
     }
