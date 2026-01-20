@@ -16,10 +16,12 @@ spec:
   serviceAccountName: jenkins-admin
   securityContext:
     fsGroup: 1000
-  volumes:
+  volumes: 
   - name: docker-sock
     hostPath:
       path: /var/run/docker.sock
+  - name: docker-workspace
+    emptyDir: {}
   containers:
   - name: build
     image: alpine/git:latest
@@ -58,11 +60,8 @@ spec:
     volumeMounts:
     - name: docker-sock
       mountPath: /var/run/docker.sock
-    - name: docker-workspace 
+    - name: docker-workspace
       mountPath: /workspace
-  volumes:
-  - name: docker-workspace
-    emptyDir: {}
 """
 ) {
     node(label) {
@@ -84,26 +83,15 @@ spec:
                     ls -la sample-app
                 '''
             }
-            stage("Test") {
-                sh '''
-                    echo "Running tests inside Kubernetes agent pod"
-                '''
-            }
         }
 
         container('ubuntu') {
             stage("Install Docker") {
                 sh '''
-                    apt-get update
-                    apt-get install -y ca-certificates curl gnupg lsb-release
-                    
+                    apt-get update && apt-get install -y ca-certificates curl gnupg lsb-release
                     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-                    
                     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-                    
-                    apt-get update
-                    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-                    
+                    apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
                     docker --version
                     echo "✅ Docker installed successfully!"
                 '''
