@@ -14,16 +14,41 @@ metadata:
     jenkins: slave
 spec:
   serviceAccountName: jenkins-admin
-  securityContext:
-    fsGroup: 1000
-    runAsGroup: 0    
-    runAsUser: 0      
   volumes:
-  - name: docker-sock
-    hostPath:
-      path: /var/run/docker.sock
+  - name: docker-config
+    emptyDir: {}
+  - name: workspace
+    emptyDir: {}
   containers:
-  - name: build
+  - name: jnlp
+    image: jenkins/inbound-agent:latest
+    env:
+    - name: JENKINS_URL
+      value: "http://jenkins.jenkins.svc.cluster.local:8080/"
+  - name: docker-dind
+    image: docker:27.4.1-dind
+    privileged: true
+    env:
+    - name: DOCKER_TLS_CERTDIR: ""
+    volumeMounts:
+    - name: docker-config
+      mountPath: /certs/client
+    - name: workspace
+      mountPath: /workspace
+  - name: docker-cli
+    image: docker:27.4.1-alpine3.21
+    env:
+    - name: DOCKER_HOST
+      value: tcp://localhost:2376
+    - name: DOCKER_TLS_CERTDIR: ""
+    volumeMounts:
+    - name: docker-config
+      mountPath: /certs/client
+    - name: workspace
+      mountPath: /workspace
+    command: ['cat']
+    tty: true
+  - name: git
     image: alpine/git:latest
     command: ['cat']
     tty: true
@@ -33,52 +58,24 @@ spec:
         secretKeyRef:
           name: git-token
           key: token
-    - name: JENKINS_URL
-      value: "http://jenkins.jenkins.svc.cluster.local:8080/"
-  - name: jnlp
-    image: jenkins/inbound-agent:latest
-    env:
-    - name: JENKINS_URL
-      value: "http://jenkins.jenkins.svc.cluster.local:8080/"
-  - name: docker-agent      
-    image: ubuntu:22.04
-    command: ['cat']
-    tty: true
-    env:
-    - name: DEBIAN_FRONTEND
-      value: noninteractive
-    volumeMounts:
-    - name: docker-sock
-      mountPath: /var/run/docker.sock
-    securityContext:        
-      runAsUser: 0          
 """
 ) {
     node(label) {
-        container('build') {
-            stage("Checkout Code") {
+        container('git') {
+            stage('Checkout') {
                 sh '''
                     git config --global url."https://${GIT_TOKEN}@github.com/".insteadOf "https://github.com/"
-                    git clone https://github.com/aswarda/sample-app.git
+                    git clone https://github.com/aswarda/sample-app.git /workspace/sample-app
                 '''
             }
         }
-
-        container('docker-agent') {
-            stage("Docker Build") {
+        
+        container('docker-cli') {
+            stage('Docker Build') {
                 sh '''
-                    apt-get update && apt-get install -y ca-certificates curl gnupg lsb-release
-                    
-                    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-                    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-                    
-                    apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io
-                    
-                    id
-                    ls -l /var/run/docker.sock
-                    docker version
-                    
-                    docker build -t sample-app:latest -f sample-app/Dockerfile .
+                    docker info
+                    cd /workspace/sample-app
+                    docker build -t sample-app:latest -f Dockerfile .
                     docker run --rm sample-app:latest
                 '''
             }
