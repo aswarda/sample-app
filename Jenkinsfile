@@ -16,10 +16,11 @@ spec:
   serviceAccountName: jenkins-admin
   securityContext:
     fsGroup: 1000
-  volumes: 
+  volumes:
   - name: docker-sock
     hostPath:
       path: /var/run/docker.sock
+      type: Socket 
   - name: docker-workspace
     emptyDir: {}
   containers:
@@ -51,12 +52,12 @@ spec:
     - name: docker-sock
       mountPath: /var/run/docker.sock
   - name: docker
-    image: docker:27.4.1-dind-alpine3.21
-    privileged: true
-    command: ['dockerd']
+    image: docker:27.4.1-alpine3.21  # ← Docker CLI only, NO DinD
+    command: ['cat']  # ← Keep alive
+    tty: true
     env:
-    - name: DOCKER_TLS_CERTDIR
-      value: ""
+    - name: DOCKER_HOST
+      value: "unix:///var/run/docker.sock"
     volumeMounts:
     - name: docker-sock
       mountPath: /var/run/docker.sock
@@ -66,21 +67,10 @@ spec:
 ) {
     node(label) {
         container('build') {
-            stage("Prepare Workspace") {
-                ws('/home/jenkins/agent/workspace') {
-                    cleanWs()
-                }
-            }
             stage("Checkout Code") {
                 sh '''
                     git config --global url."https://${GIT_TOKEN}@github.com/".insteadOf "https://github.com/"
                     git clone https://github.com/aswarda/sample-app.git
-                '''
-            }
-            stage("Build") {
-                sh '''
-                    echo "Running build inside Kubernetes agent pod"
-                    ls -la sample-app
                 '''
             }
         }
@@ -93,7 +83,6 @@ spec:
                     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
                     apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
                     docker --version
-                    echo "✅ Docker installed successfully!"
                 '''
             }
         }
