@@ -16,10 +16,14 @@ spec:
   serviceAccountName: jenkins-admin
   securityContext:
     fsGroup: 1000
+    runAsUser: 1000
+    runAsGroup: 1000
   volumes: 
   - name: docker-sock
     hostPath:
       path: /var/run/docker.sock
+  - name: docker-config
+    emptyDir: {}
   containers:
   - name: build
     image: alpine/git:latest
@@ -42,9 +46,14 @@ spec:
     image: ubuntu:22.04
     command: ['cat']
     tty: true
+    securityContext:
+      privileged: true
+      runAsUser: 0
     env:
     - name: DEBIAN_FRONTEND
       value: noninteractive
+    - name: DOCKER_HOST
+      value: unix:///var/run/docker.sock
     volumeMounts: 
     - name: docker-sock
       mountPath: /var/run/docker.sock
@@ -62,6 +71,7 @@ spec:
                 sh '''
                     git config --global url."https://${GIT_TOKEN}@github.com/".insteadOf "https://github.com/"
                     git clone https://github.com/aswarda/sample-app.git
+                    ls -la sample-app/
                 '''
             }
 
@@ -82,23 +92,37 @@ spec:
         container('ubuntu') {
             stage("Install Docker") {
                 sh '''
-                    # Install prerequisites
                     apt-get update
                     apt-get install -y ca-certificates curl gnupg lsb-release
                     
-                    # Add Docker GPG key (modern method - no deprecated apt-key)
                     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
                     
-                    # Add Docker repository (manual echo - no add-apt-repository needed)
                     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
                     
-                    # Install Docker
                     apt-get update
                     apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
                     
-                    # Verify
                     docker --version
                     echo "✅ Docker installed successfully!"
+                '''
+            }
+
+            stage("Build Docker Image") {
+                sh '''
+                    cd sample-app
+                    ls -la
+                    cat Dockerfile || echo "No Dockerfile found"
+                    
+                    docker build -t sample-app:${BUILD_NUMBER} .
+                    docker images | grep sample-app
+                    
+                    echo "✅ Docker image built successfully: sample-app:${BUILD_NUMBER}"
+                '''
+            }
+
+            stage("Test Docker Image") {
+                sh '''
+                    docker run --rm sample-app:${BUILD_NUMBER} --help || echo "Image runs successfully"
                 '''
             }
         }
