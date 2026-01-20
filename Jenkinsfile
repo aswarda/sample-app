@@ -4,7 +4,7 @@ podTemplate(
     cloud: "kubernetes",
     name: label,
     label: label,
-    idleMinutes: 02,
+    idleMinutes: 20,
     nodeUsageMode: "EXCLUSIVE",
     yaml: """
 apiVersion: v1
