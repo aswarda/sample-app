@@ -98,6 +98,7 @@ spec:
                     
                     # Verify
                     docker --version
+                    whoami
                     echo "✅ Docker installed successfully!"
                     ls -l sample-app
                     docker build -t sample-app:latest -f sample-app/Dockerfile .
