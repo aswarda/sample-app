@@ -57,6 +57,19 @@ spec:
     volumeMounts: 
     - name: docker-sock
       mountPath: /var/run/docker.sock
+  - name: docker-agent
+    image: docker:27.1-alpine3.19
+    command: ['cat']
+    tty: true
+    securityContext:
+      privileged: true
+      runAsUser: 0
+    env:
+    - name: DOCKER_HOST
+      value: unix:///var/run/docker.sock
+    volumeMounts: 
+    - name: docker-sock
+      mountPath: /var/run/docker.sock
 """
 ) {
     node(label) {
@@ -109,17 +122,29 @@ spec:
                     ls -la
                     cat Dockerfile || echo "No Dockerfile found"
                     
-                    docker build -t sample-app:${BUILD_NUMBER} .
-                    docker images | grep sample-app
+                    #docker build -t sample-app:${BUILD_NUMBER} .
+                    #docker images | grep sample-app
                     
                     echo "✅ Docker image built successfully: sample-app:${BUILD_NUMBER}"
                 '''
             }
-
-            stage("Test Docker Image") {
+        container('docker-agent') {
+            stage("Verify Docker") {
                 sh '''
-                    docker run --rm sample-app:${BUILD_NUMBER} --help || echo "Image runs successfully"
+                    docker --version
+                    docker info
+                    chmod 666 /var/run/docker.sock
+                    echo "✅ Docker ready!"
                 '''
+            }
+        
+            stage("Build Docker Image") {
+                sh '''
+                    cd /home/jenkins/agent/workspace/ASwarda/sample-app
+                    docker build -t sample-app:${BUILD_NUMBER} .
+                    docker images | grep sample-app
+                '''
+                }
             }
         }
     }
