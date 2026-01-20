@@ -60,8 +60,7 @@ spec:
 
             stage("Checkout Code") {
                 sh '''
-                    git config --global url."https://${GIT_TOKEN}@github.com/".insteadOf "https://github.com/"
-                    git clone [https://github.com/aswarda/sample-app.git](https://github.com/aswarda/sample-app.git)
+                    git clone https://github.com/aswarda/sample-app.git
                 '''
             }
 
