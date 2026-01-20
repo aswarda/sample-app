@@ -41,6 +41,9 @@ spec:
     env:
     - name: DEBIAN_FRONTEND
       value: noninteractive
+    volumeMounts:  # ← ADD THIS
+    - name: docker-sock
+      mountPath: /var/run/docker.sock
 """
 ) {
     node(label) {
