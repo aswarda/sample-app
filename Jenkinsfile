@@ -4,7 +4,7 @@ podTemplate(
     cloud: "kubernetes",
     name: label,
     label: label,
-    idleMinutes: 02,
+    idleMinutes: 2,
     nodeUsageMode: "EXCLUSIVE",
     yaml: """
 apiVersion: v1
@@ -16,7 +16,7 @@ spec:
   serviceAccountName: jenkins-admin
   securityContext:
     fsGroup: 1000
-  volumes:  # ← ADD THIS
+  volumes:
   - name: docker-sock
     hostPath:
       path: /var/run/docker.sock
@@ -45,15 +45,24 @@ spec:
     env:
     - name: DEBIAN_FRONTEND
       value: noninteractive
-    volumeMounts:  # ← ADD THIS
+    volumeMounts:
     - name: docker-sock
       mountPath: /var/run/docker.sock
-  - name: docker      # ← REPLACED ubuntu
+  - name: docker
     image: docker:27.4.1-dind-alpine3.21
-    privileged: true   # Docker daemon needs this
+    privileged: true
     command: ['dockerd']
     env:
     - name: DOCKER_TLS_CERTDIR
+      value: ""
+    volumeMounts:
+    - name: docker-sock
+      mountPath: /var/run/docker.sock
+    - name: docker-workspace 
+      mountPath: /workspace
+  volumes:
+  - name: docker-workspace
+    emptyDir: {}
 """
 ) {
     node(label) {
@@ -63,21 +72,18 @@ spec:
                     cleanWs()
                 }
             }
-
             stage("Checkout Code") {
                 sh '''
                     git config --global url."https://${GIT_TOKEN}@github.com/".insteadOf "https://github.com/"
                     git clone https://github.com/aswarda/sample-app.git
                 '''
             }
-
             stage("Build") {
                 sh '''
                     echo "Running build inside Kubernetes agent pod"
                     ls -la sample-app
                 '''
             }
-
             stage("Test") {
                 sh '''
                     echo "Running tests inside Kubernetes agent pod"
@@ -88,33 +94,31 @@ spec:
         container('ubuntu') {
             stage("Install Docker") {
                 sh '''
-                    # Install prerequisites
                     apt-get update
                     apt-get install -y ca-certificates curl gnupg lsb-release
                     
-                    # Add Docker GPG key (modern method - no deprecated apt-key)
                     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
                     
-                    # Add Docker repository (manual echo - no add-apt-repository needed)
                     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
                     
-                    # Install Docker
                     apt-get update
                     apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
                     
-                    # Verify
                     docker --version
                     echo "✅ Docker installed successfully!"
                 '''
             }
-            
+        }
+
         container('docker') {
             stage('Docker Build') {
                 sh '''
-                    docker build -t sample-app:latest -f sample-app/Dockerfile .
+                    cp -r /home/jenkins/agent/workspace/sample-app /workspace/
+                    cd /workspace/sample-app
+                    docker info
+                    docker build -t sample-app:latest -f Dockerfile .
                     docker run --rm sample-app:latest
                 '''
-                }
             }
         }
     }
