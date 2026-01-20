@@ -29,7 +29,8 @@ spec:
     image: docker:27.4.1-dind
     privileged: true
     env:
-    - name: DOCKER_TLS_CERTDIR: ""
+    - name: DOCKER_TLS_CERTDIR 
+      value: ""                 
     volumeMounts:
     - name: docker-config
       mountPath: /certs/client
@@ -40,7 +41,8 @@ spec:
     env:
     - name: DOCKER_HOST
       value: tcp://localhost:2376
-    - name: DOCKER_TLS_CERTDIR: ""
+    - name: DOCKER_TLS_CERTDIR  # ← FIXED: Proper YAML structure
+      value: ""
     volumeMounts:
     - name: docker-config
       mountPath: /certs/client
