@@ -4,7 +4,7 @@ podTemplate(
     cloud: "kubernetes",
     name: label,
     label: label,
-    idleMinutes: 2,
+    idleMinutes: 02,
     nodeUsageMode: "EXCLUSIVE",
     yaml: """
 apiVersion: v1
@@ -14,43 +14,14 @@ metadata:
     jenkins: slave
 spec:
   serviceAccountName: jenkins-admin
-  volumes:
-  - name: docker-config
-    emptyDir: {}
-  - name: workspace
-    emptyDir: {}
+  securityContext:
+    fsGroup: 1000
+  volumes: 
+  - name: docker-sock
+    hostPath:
+      path: /var/run/docker.sock
   containers:
-  - name: jnlp
-    image: jenkins/inbound-agent:latest
-    env:
-    - name: JENKINS_URL
-      value: "http://jenkins.jenkins.svc.cluster.local:8080/"
-  - name: docker-dind
-    image: docker:27.4.1-dind
-    privileged: true
-    env:
-    - name: DOCKER_TLS_CERTDIR 
-      value: ""                 
-    volumeMounts:
-    - name: docker-config
-      mountPath: /certs/client
-    - name: workspace
-      mountPath: /workspace
-  - name: docker-cli
-    image: docker:27.4.1-alpine3.21
-    env:
-    - name: DOCKER_HOST
-      value: tcp://localhost:2376
-    - name: DOCKER_TLS_CERTDIR  # ← FIXED: Proper YAML structure
-      value: ""
-    volumeMounts:
-    - name: docker-config
-      mountPath: /certs/client
-    - name: workspace
-      mountPath: /workspace
-    command: ['cat']
-    tty: true
-  - name: git
+  - name: build
     image: alpine/git:latest
     command: ['cat']
     tty: true
@@ -60,25 +31,74 @@ spec:
         secretKeyRef:
           name: git-token
           key: token
+    - name: JENKINS_URL
+      value: "http://jenkins.jenkins.svc.cluster.local:8080/"
+  - name: jnlp
+    image: jenkins/inbound-agent:latest
+    env:
+    - name: JENKINS_URL
+      value: "http://jenkins.jenkins.svc.cluster.local:8080/"
+  - name: ubuntu
+    image: ubuntu:22.04
+    command: ['cat']
+    tty: true
+    env:
+    - name: DEBIAN_FRONTEND
+      value: noninteractive
+    volumeMounts: 
+    - name: docker-sock
+      mountPath: /var/run/docker.sock
 """
 ) {
     node(label) {
-        container('git') {
-            stage('Checkout') {
+        container('build') {
+            stage("Prepare Workspace") {
+                ws('/home/jenkins/agent/workspace') {
+                    cleanWs()
+                }
+            }
+
+            stage("Checkout Code") {
                 sh '''
                     git config --global url."https://${GIT_TOKEN}@github.com/".insteadOf "https://github.com/"
-                    git clone https://github.com/aswarda/sample-app.git /workspace/sample-app
+                    git clone https://github.com/aswarda/sample-app.git
+                '''
+            }
+
+            stage("Build") {
+                sh '''
+                    echo "Running build inside Kubernetes agent pod"
+                    ls -la sample-app
+                '''
+            }
+
+            stage("Test") {
+                sh '''
+                    echo "Running tests inside Kubernetes agent pod"
                 '''
             }
         }
-        
-        container('docker-cli') {
-            stage('Docker Build') {
+
+        container('ubuntu') {
+            stage("Install Docker") {
                 sh '''
-                    docker info
-                    cd /workspace/sample-app
-                    docker build -t sample-app:latest -f Dockerfile .
-                    docker run --rm sample-app:latest
+                    # Install prerequisites
+                    apt-get update
+                    apt-get install -y ca-certificates curl gnupg lsb-release
+                    
+                    # Add Docker GPG key (modern method - no deprecated apt-key)
+                    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+                    
+                    # Add Docker repository (manual echo - no add-apt-repository needed)
+                    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+                    
+                    # Install Docker
+                    apt-get update
+                    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+                    
+                    # Verify
+                    docker --version
+                    echo "✅ Docker installed successfully!"
                 '''
             }
         }
