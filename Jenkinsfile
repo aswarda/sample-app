@@ -82,13 +82,13 @@ spec:
     - name: SNYK_REGISTRY_USERNAME
         valueFrom:
         secretKeyRef:
-            name: acr-creds
-            key: username
+          name: acr-creds
+          key: username
     - name: SNYK_REGISTRY_PASSWORD
         valueFrom:
         secretKeyRef:
-            name: acr-creds
-            key: password
+          name: acr-creds
+          key: password
 """
 ) {
     node(label) {
