@@ -17,7 +17,7 @@ spec:
   securityContext:
     fsGroup: 1000
     runAsUser: 0
-  volumes: 
+  volumes:
   - name: docker-sock
     hostPath:
       path: /var/run/docker.sock
@@ -46,14 +46,28 @@ spec:
     env:
     - name: DEBIAN_FRONTEND
       value: noninteractive
-    volumeMounts: 
+    volumeMounts:
     - name: docker-sock
       mountPath: /var/run/docker.sock
   - name: docker
     image: docker:24-dind
     securityContext:
       privileged: true
-
+  - name: snyk
+    image: snyk/snyk:docker
+    command: ['cat']
+    tty: true
+    env:
+        - name: SNYK_TOKEN
+        valueFrom:
+            secretKeyRef:
+            name: snyk-token
+            key: token
+        - name: SNYK_ORG
+        valueFrom:
+            secretKeyRef:
+            name: snyk-token
+            key: org_id
 """
 ) {
     node(label) {
@@ -87,10 +101,23 @@ spec:
         container('docker') {
             stage("Install Docker") {
                 sh '''
-                    
                     # Verify
                     docker --version
                     echo "✅ Docker installed successfully!"
+                    docker build -t sample-app:latest ./sample-app
+                    docker images
+                '''
+            }
+        }
+        container('snyk') {
+            stage("Install Snyk") {
+                sh '''
+                    # Verify
+                    snyk --version
+                    echo "✅ Snyk installed successfully!"
+                    snyk auth $SNYK_TOKEN
+                    snyk config set org=$SNYK_ORG
+                    snyk test ./sample-app --docker alpine/git:latest --file=Dockerfile
                 '''
             }
         }
