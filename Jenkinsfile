@@ -58,16 +58,16 @@ spec:
     command: ['cat']
     tty: true
     env:
-        - name: SNYK_TOKEN
-        valueFrom:
-            secretKeyRef:
-            name: snyk-token
-            key: token
-        - name: SNYK_ORG
-        valueFrom:
-            secretKeyRef:
-            name: snyk-token
-            key: org_id
+    - name: SNYK_TOKEN
+      valueFrom:
+        secretKeyRef:
+        name: snyk-token
+        key: token
+    - name: SNYK_ORG
+      valueFrom:
+        secretKeyRef:
+        name: snyk-token
+        key: org_id
 """
 ) {
     node(label) {
