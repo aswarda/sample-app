@@ -53,6 +53,17 @@ spec:
     image: docker:24-dind
     securityContext:
       privileged: true
+    env:
+    - name: ACR_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: acr-creds
+          key: username
+    - name: ACR_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: acr-creds
+          key: password
   - name: snyk
     image: snyk/snyk:docker
     command: ['cat']
