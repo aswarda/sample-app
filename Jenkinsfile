@@ -114,8 +114,21 @@ spec:
                 sh '''
                     # Verify
                     docker --version
-                    echo "✅ Docker installed successfully!"
+        
+                    echo "🔐 Logging in to ACR"
+                    echo $ACR_PASSWORD | docker login aswardacr2026.azurecr.io \
+                      -u $ACR_USERNAME --password-stdin
+        
+                    echo "🐳 Building image"
                     docker build -t sample-app:latest ./sample-app
+        
+                    echo "🏷️ Tagging image"
+                    docker tag sample-app:latest \
+                      aswardacr2026.azurecr.io/sample-app:${BUILD_NUMBER}
+        
+                    echo "📤 Pushing image"
+                    docker push aswardacr2026.azurecr.io/sample-app:${BUILD_NUMBER}
+        
                     docker images
                 '''
             }
@@ -129,6 +142,10 @@ spec:
                     snyk auth $SNYK_TOKEN
                     snyk config set org=$SNYK_ORG
                     snyk code test ./sample-app --include-ignores
+                    snyk container test aswardacr2026.azurecr.io/sample-app:${BUILD_NUMBER} \
+                    --file=sample-app/Dockerfile \
+                    --severity-threshold=high
+                    
                 '''
             }
         }
