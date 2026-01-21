@@ -80,12 +80,12 @@ spec:
           name: snyk-token
           key: org_id
     - name: SNYK_REGISTRY_USERNAME
-        valueFrom:
+      valueFrom:
         secretKeyRef:
           name: acr-creds
           key: username
     - name: SNYK_REGISTRY_PASSWORD
-        valueFrom:
+      valueFrom:
         secretKeyRef:
           name: acr-creds
           key: password
