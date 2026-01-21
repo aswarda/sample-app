@@ -16,6 +16,7 @@ spec:
   serviceAccountName: jenkins-admin
   securityContext:
     fsGroup: 1000
+    runAsUser: 0
   volumes: 
   - name: docker-sock
     hostPath:
@@ -48,6 +49,11 @@ spec:
     volumeMounts: 
     - name: docker-sock
       mountPath: /var/run/docker.sock
+  - name: docker
+    image: docker:24-dind
+    securityContext:
+      privileged: true
+
 """
 ) {
     node(label) {
@@ -78,11 +84,9 @@ spec:
             }
         }
 
-        container('ubuntu') {
+        container('docker') {
             stage("Install Docker") {
                 sh '''
-                    # Install prerequisites
-                    apt-get update
                     
                     # Verify
                     docker --version
