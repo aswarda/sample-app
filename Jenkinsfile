@@ -117,7 +117,7 @@ spec:
                     echo "✅ Snyk installed successfully!"
                     snyk auth $SNYK_TOKEN
                     snyk config set org=$SNYK_ORG
-                    snyk test ./sample-app --docker alpine/git:latest --file=Dockerfile
+                    snyk code test ./sample-app 
                 '''
             }
         }
