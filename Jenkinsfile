@@ -61,13 +61,13 @@ spec:
     - name: SNYK_TOKEN
       valueFrom:
         secretKeyRef:
-        name: snyk-token
-        key: token
+          name: snyk-token
+          key: token
     - name: SNYK_ORG
       valueFrom:
         secretKeyRef:
-        name: snyk-token
-        key: org_id
+          name: snyk-token
+          key: org_id
 """
 ) {
     node(label) {
