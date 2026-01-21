@@ -117,7 +117,7 @@ spec:
                     echo "✅ Snyk installed successfully!"
                     snyk auth $SNYK_TOKEN
                     snyk config set org=$SNYK_ORG
-                    snyk code test ./sample-app 
+                    snyk code test ./sample-app --include-ignores
                 '''
             }
         }
