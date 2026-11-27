@@ -1,6 +1,14 @@
+# ---- build stage ----
+FROM maven:3.9-eclipse-temurin-17 AS build
+WORKDIR /build
+COPY pom.xml .
+RUN mvn -B dependency:go-offline
+COPY src ./src
+RUN mvn -B package -DskipTests
+
+# ---- runtime stage ----
 FROM eclipse-temurin:17-jre
 WORKDIR /app
-COPY target/cicd-sample-1.0.0.jar app.jar
+COPY --from=build /build/target/*.jar app.jar
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=3s CMD curl -f http://localhost:8080/api/health || exit 1
 ENTRYPOINT ["java","-jar","app.jar"]
