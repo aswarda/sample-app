@@ -17,6 +17,7 @@ public class ApiController {
             "status", "UP",
             "service", "cicd-sample",
             "version", "1.0.0",
+            "environment", "production",
             "timestamp", Instant.now().toString()
         );
     }
