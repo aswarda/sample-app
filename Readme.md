@@ -150,6 +150,7 @@ aws ec2 authorize-security-group-ingress \
 ```
 
 Access UI at `https://<NODE_EXTERNAL_IP>:<NODE_PORT>` using username `admin`.
+<img width="1919" height="1124" alt="image" src="https://github.com/user-attachments/assets/816e7e9a-0d18-49ed-b8f0-1e91a2ed439a" />
 
 ---
 
