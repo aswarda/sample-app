@@ -17,7 +17,7 @@ spec:
       containers:
         - name: sample-app
           # Replace the tag with the one pushed by your pipeline (date-time-commit)
-          image: 588950501282.dkr.ecr.ap-southeast-1.amazonaws.com/sample-app:20261127-1603-ef72086
+          image: 588950501282.dkr.ecr.ap-southeast-1.amazonaws.com/sample-app:20261127-1634-65c63e4
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
