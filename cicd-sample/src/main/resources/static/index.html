@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sample App</title>
+  <style>
+    :root { --bg:#f6f7f9; --card:#fff; --text:#1c1f24; --muted:#667085; --ok:#12b76a; --bad:#f04438; --border:#e4e7ec; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg:#14161a; --card:#1d2026; --text:#eceef2; --muted:#98a2b3; --border:#2d323b; }
+    }
+    body { margin:0; font-family:system-ui,sans-serif; background:var(--bg); color:var(--text); }
+    main { max-width:720px; margin:40px auto; padding:0 16px; }
+    h1 { margin-bottom:4px; }
+    p.sub { color:var(--muted); margin-top:0; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; margin:16px 0; }
+    .badge { display:inline-block; padding:2px 10px; border-radius:99px; color:#fff; font-size:13px; background:var(--muted); }
+    .badge.up { background:var(--ok); } .badge.down { background:var(--bad); }
+    pre { background:var(--bg); padding:12px; border-radius:8px; overflow-x:auto; margin:8px 0 0; }
+    a { color:inherit; }
+    button { padding:6px 14px; border-radius:8px; border:1px solid var(--border); background:var(--card); color:var(--text); cursor:pointer; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Sample App</h1>
+  <p class="sub">Spring Boot service deployed via GitHub Actions, ECR and Argo CD</p>
+
+  <div class="card">
+    <strong>Health</strong> <span id="badge" class="badge">checking...</span>
+    <button id="refresh" style="float:right">Refresh</button>
+    <pre id="health">-</pre>
+  </div>
+
+  <div class="card">
+    <strong>Items</strong>
+    <pre id="items">-</pre>
+  </div>
+
+  <div class="card">
+    <strong>Endpoints</strong>
+    <ul>
+      <li><a href="/api/health">/api/health</a></li>
+      <li><a href="/api/hello">/api/hello</a></li>
+      <li><a href="/api/items">/api/items</a></li>
+      <li><a href="/actuator/health">/actuator/health</a></li>
+    </ul>
+  </div>
+</main>
+
+<script>
+  async function load() {
+    const badge = document.getElementById('badge');
+    try {
+      const h = await (await fetch('/api/health')).json();
+      document.getElementById('health').textContent = JSON.stringify(h, null, 2);
+      badge.textContent = h.status;
+      badge.className = 'badge ' + (h.status === 'UP' ? 'up' : 'down');
+      const i = await (await fetch('/api/items')).json();
+      document.getElementById('items').textContent = JSON.stringify(i, null, 2);
+    } catch (e) {
+      badge.textContent = 'DOWN';
+      badge.className = 'badge down';
+      document.getElementById('health').textContent = String(e);
+    }
+  }
+  document.getElementById('refresh').addEventListener('click', load);
+  load();
+</script>
+</body>
+</html>
