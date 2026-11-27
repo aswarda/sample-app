@@ -102,6 +102,7 @@ Connect `kubectl`:
 aws eks update-kubeconfig --region \$REGION --name test-eks-cluster
 kubectl get nodes
 ```
+<img width="1920" height="875" alt="image" src="https://github.com/user-attachments/assets/542fdbc4-eabe-4b8b-8b74-dcdea172dacc" />
 
 ---
 
