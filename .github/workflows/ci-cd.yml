@@ -12,6 +12,7 @@ env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
   ECR_REPOSITORY: sample-app
   APP_DIR: cicd-sample
+  DEPLOY_FILE: k8s/deployment.yaml
 
 jobs:
   test:
@@ -80,3 +81,39 @@ jobs:
         run: |
           echo "### Image pushed" >> "$GITHUB_STEP_SUMMARY"
           echo "\`${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.meta.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
+
+  update-manifest:
+    needs: build-and-push
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: update-manifest
+      cancel-in-progress: false
+    env:
+      TAG: ${{ needs.build-and-push.outputs.image_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Update image tag in deployment.yaml
+        run: |
+          # keep the registry part, replace only the tag
+          sed -i -E "s|(image: .*/${ECR_REPOSITORY}:).*|\1${TAG}|" "$DEPLOY_FILE"
+          echo "Updated line:"
+          grep -n "image:" "$DEPLOY_FILE"
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git add "$DEPLOY_FILE"
+          git commit -m "ci: update ${ECR_REPOSITORY} image tag to ${TAG} [skip ci]"
+          git pull --rebase origin "${{ github.ref_name }}"
+          git push origin "HEAD:${{ github.ref_name }}"
