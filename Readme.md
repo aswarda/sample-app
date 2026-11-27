@@ -153,6 +153,9 @@ aws ec2 authorize-security-group-ingress \
 Access UI at `https://<NODE_EXTERNAL_IP>:<NODE_PORT>` using username `admin`.
 <img width="1919" height="1124" alt="image" src="https://github.com/user-attachments/assets/816e7e9a-0d18-49ed-b8f0-1e91a2ed439a" />
 
+<img width="1920" height="1051" alt="Screenshot from 2026-11-27 21-51-03" src="https://github.com/user-attachments/assets/4be7caa7-f113-4504-a0cc-107cbeaeede1" />
+<img width="1920" height="1051" alt="Screenshot from 2026-11-27 21-51-17" src="https://github.com/user-attachments/assets/05608782-44f5-4aeb-8856-87f43709dd94" />
+
 ---
 1. Spring Boot app running on localhost:8080 (Any port is fine)
 <img width="1919" height="1124" alt="image" src="https://github.com/user-attachments/assets/798a3834-30ed-4a3a-b6d6-1f78337984f7" />
