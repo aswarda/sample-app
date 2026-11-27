@@ -1,5 +1,6 @@
 # EKS Cluster & Argo CD Setup (Testing)
 
+## Refer `sample-app` branch only
 Simple steps to spin up a test EKS cluster in the default VPC (`ap-southeast-1`) using AWS CLI and deploy Argo CD.
 
 > **Note:** A public hosted zone is not available in this AWS account to configure custom DNS for the application and Argo CD, so `NodePort` is used to access the UI directly via the worker node's public IP.
