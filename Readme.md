@@ -153,6 +153,35 @@ Access UI at `https://<NODE_EXTERNAL_IP>:<NODE_PORT>` using username `admin`.
 <img width="1919" height="1124" alt="image" src="https://github.com/user-attachments/assets/816e7e9a-0d18-49ed-b8f0-1e91a2ed439a" />
 
 ---
+1. Spring Boot app running on localhost:8080 (Any port is fine)
+<img width="1919" height="1124" alt="image" src="https://github.com/user-attachments/assets/798a3834-30ed-4a3a-b6d6-1f78337984f7" />
+
+2. Docker build output showing successful image creation
+<img width="1919" height="1124" alt="image" src="https://github.com/user-attachments/assets/075011fe-6047-4277-a59f-c19ebe4d73df" />
+
+3. Docker push to registry confirmation
+<img width="1919" height="764" alt="image" src="https://github.com/user-attachments/assets/e3625469-7d8e-4361-a05d-f6ce370965a9" />
+
+4. CI/CD pipeline execution logs (full build success)
+<img width="1919" height="1017" alt="image" src="https://github.com/user-attachments/assets/ca4cbef6-3968-486f-bbcf-2f38ba374c9f" />
+
+5. Kubernetes deployment apply command and output
+<img width="1919" height="1017" alt="image" src="https://github.com/user-attachments/assets/b1881a99-e395-4414-9122-a0af5b0cf7f7" />
+
+6. kubectl get pods showing 2+ running pods
+<img width="1222" height="387" alt="image" src="https://github.com/user-attachments/assets/47c355b3-4d8e-4b34-a091-e252e15eba6f" />
+
+7. kubectl get svc showing service details
+<img width="1222" height="387" alt="image" src="https://github.com/user-attachments/assets/799083db-a250-4017-9bef-6da73d778177" />
+
+8. GitOps (ArgoCD/Flux) showing synced deployment
+<img width="1911" height="1085" alt="image" src="https://github.com/user-attachments/assets/6f275ce8-790b-488a-9ce4-2d8b3cd629e5" />
+
+9. Application homepage in browser
+<img width="1911" height="1085" alt="image" src="https://github.com/user-attachments/assets/a8529d72-b096-4578-ae8b-deb76cf45249" />
+
+10. API health endpoint response (/api/health)
+<img width="1911" height="1085" alt="image" src="https://github.com/user-attachments/assets/00690121-e0a0-4f0c-b6a2-ae63ac9caeb6" />
 
 ## 4. Cleanup
 
